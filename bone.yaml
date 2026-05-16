@@ -1,0 +1,13 @@
+path: /app/dataset/bones/voc/VOCdevkit/VOC2007
+#path: E:\dataset\bones\voc\VOCdevkit\VOC2007
+train: train
+val : val
+
+names:
+    0: Radius
+    1: Ulna
+    2: MCPFirst
+    3: MCP
+    4: ProximalPhalanx
+    5: MiddlePhalanx
+    6: DistalPhalanx

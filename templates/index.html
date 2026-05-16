@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>骨龄检测系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body>
+    <header class="top-nav">
+      <a class="brand" href="{{ url_for('index') }}">骨龄检测</a>
+      <nav class="nav-links" aria-label="主导航">
+        <a href="#upload">上传检测</a>
+        <a href="#process">检测流程</a>
+        <a href="#history">历史记录</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">AI Bone Age System</p>
+          <h1>上传手部 X 光片，快速生成骨龄评估结果。</h1>
+          <p class="lead">
+            系统调用当前项目中的 YOLO 检测与分类模型，自动裁剪 13 个骨骺区域，
+            计算 TW3 风格评分并给出骨龄预测。
+          </p>
+          <a class="button button-primary" href="#upload">开始检测</a>
+        </div>
+        <div class="mockup-card" aria-label="系统预览">
+          <div class="mockup-sidebar">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <div class="mockup-main">
+            <div class="mockup-toolbar">
+              <span>Radius</span>
+              <span>Ulna</span>
+              <span>MCP</span>
+            </div>
+            <div class="xray-frame">
+              <div class="xray-hand"></div>
+            </div>
+          </div>
+          <div class="mockup-panel">
+            <p class="panel-title">检测时间线</p>
+            <span class="pill thinking">Thinking</span>
+            <span class="pill read">Reading</span>
+            <span class="pill edit">Editing</span>
+            <span class="pill done">Done</span>
+          </div>
+        </div>
+      </section>
+
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <section class="notice">
+            {% for message in messages %}
+              <p>{{ message }}</p>
+            {% endfor %}
+          </section>
+        {% endif %}
+      {% endwith %}
+
+      <section id="upload" class="section-grid">
+        <article class="card upload-card">
+          <p class="eyebrow">Upload</p>
+          <h2>上传图片</h2>
+          <p>请选择清晰的左手或右手 X 光片。上传文件会保存到 <code>data/uploads</code>。</p>
+          <form method="post" enctype="multipart/form-data">
+            <label class="file-input">
+              <span>选择 X 光图片</span>
+              <input type="file" name="image" accept=".png,.jpg,.jpeg,.bmp,.webp" required>
+            </label>
+            <button class="button button-primary" type="submit">检测骨龄</button>
+          </form>
+        </article>
+
+        <article class="card result-card">
+          <p class="eyebrow">Result</p>
+          <h2>检测结果</h2>
+          {% if prediction %}
+            {% if prediction.error %}
+              <div class="error-box">
+                <strong>{{ prediction.error }}</strong>
+                <span>{{ prediction.detail }}</span>
+              </div>
+              <img class="preview" src="{{ prediction.image_url }}" alt="已上传的 X 光图片">
+            {% else %}
+              <div class="age-number">
+                <span>{{ prediction.age }}</span>
+                <small>岁</small>
+              </div>
+              <p>文件：{{ prediction.filename }}</p>
+              <p>时间：{{ prediction.created_at }}</p>
+              <img class="preview" src="{{ prediction.image_url }}" alt="已检测的 X 光图片">
+            {% endif %}
+          {% else %}
+            <p class="muted">还没有检测结果。上传图片后，这里会显示预测骨龄和原图预览。</p>
+          {% endif %}
+        </article>
+      </section>
+
+      <section id="process" class="process-section">
+        <p class="eyebrow">Pipeline</p>
+        <h2>系统流程</h2>
+        <div class="feature-grid">
+          <article class="card">
+            <h3>1. 目标检测</h3>
+            <p>定位桡骨、尺骨和指骨关键区域，为后续裁剪提供边界框。</p>
+          </article>
+          <article class="card">
+            <h3>2. 骨骺分类</h3>
+            <p>对 13 个关节区域分别预测发育等级，得到每个部位的评分索引。</p>
+          </article>
+          <article class="card">
+            <h3>3. 骨龄换算</h3>
+            <p>汇总评分并通过多项式模型换算为骨龄，结果保存在本地记录中。</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="history" class="history-section">
+        <p class="eyebrow">Records</p>
+        <h2>最近检测记录</h2>
+        <div class="history-list">
+          {% for item in recent_results %}
+            <article class="history-item">
+              <img src="{{ url_for('uploaded_file', filename=item.stored_name) }}" alt="{{ item.filename }}">
+              <div>
+                <strong>{{ item.age }} 岁</strong>
+                <p>{{ item.filename }}</p>
+                <span>{{ item.created_at }}</span>
+              </div>
+            </article>
+          {% else %}
+            <p class="muted">暂无历史记录。</p>
+          {% endfor %}
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>骨龄检测系统 · 数据保存在当前项目的 <code>data</code> 目录。</p>
+    </footer>
+  </body>
+</html>
